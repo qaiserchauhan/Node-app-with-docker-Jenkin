@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+
+    environment {
+        SONARQUBE_SERVER = 'SonarQubeServerName' // optional, only if sonar integrated
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                echo 'Running SonarQube Scan...'
+                // if Sonar integration is setup
+                // withSonarQubeEnv('SonarQubeServerName') {
+                //     sh 'sonar-scanner'
+                // }
+                echo 'Skipping actual sonar scan for now...'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing npm dependencies...'
+                sh 'npm install'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the application...'
+                sh 'npm run build'
+            }
+        }
+
+        stage('Prepare Artifact') {
+            steps {
+                echo 'Zipping the build artifacts...'
+                sh '''
+                mkdir -p build_artifacts
+                zip -r build_artifacts/app.zip *
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and Artifact preparation succeeded!'
+            archiveArtifacts artifacts: 'build_artifacts/*.zip', fingerprint: true
+        }
+        failure {
+            echo 'Build Failed!'
+        }
+    }
+}

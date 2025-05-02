@@ -1,12 +1,8 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:latest'   // ✅ Use a valid Node image with npm
-        }
-    }
+    agent any
 
     environment {
-        SONARQUBE_SERVER = 'SonarQubeServerName' // optional, only if Sonar integrated
+        SONARQUBE_SERVER = 'SonarQubeServerName' // Optional
     }
 
     stages {
@@ -20,11 +16,11 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube Scan...'
-                // Uncomment when SonarQube is set up
-                // withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                // Uncomment below lines if SonarQube is integrated
+                // withSonarQubeEnv('SonarQubeServerName') {
                 //     sh 'sonar-scanner'
                 // }
-                echo 'Skipping actual Sonar scan for now...'
+                echo 'Skipping actual sonar scan for now...'
             }
         }
 
@@ -47,7 +43,7 @@ pipeline {
                 echo 'Zipping the build artifacts...'
                 sh '''
                     mkdir -p build_artifacts
-                    zip -r build_artifacts/app.zip .
+                    zip -r build_artifacts/app.zip *
                 '''
             }
         }
@@ -55,11 +51,11 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build and artifact preparation succeeded!'
+            echo 'Build and Artifact preparation succeeded!'
             archiveArtifacts artifacts: 'build_artifacts/*.zip', fingerprint: true
         }
         failure {
-            echo '❌ Build failed!'
+            echo 'Build Failed!'
         }
     }
 }

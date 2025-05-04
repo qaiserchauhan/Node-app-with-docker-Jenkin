@@ -1,12 +1,8 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'NodeJS'  // Name used in Global Tool Configuration
-    }
-
     environment {
-        SONARQUBE_SERVER = 'SonarQubeServerName' // Optional
+        IMAGE_NAME = "node-docker-demo"
     }
 
     stages {
@@ -17,44 +13,31 @@ pipeline {
             }
         }
 
-        stage('Debug Env') {
+        stage('Build Docker Image') {
             steps {
-                echo '🐛 Checking environment...'
-                sh 'echo $PATH'
-                sh 'which node'
-                sh 'which npm'
-                sh 'node -v'
-                sh 'npm -v'
+                echo '🐳 Building Docker image...'
+                script {
+                    docker.build("${IMAGE_NAME}")
+                }
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Run Build Inside Container') {
             steps {
-                echo '🔍 Running SonarQube Scan (Skipped)...'
-                // Uncomment below when Sonar is integrated
-                // withSonarQubeEnv('SonarQubeServerName') {
-                //     sh 'sonar-scanner'
-                // }
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                echo '📦 Installing npm dependencies...'
-                sh 'npm install'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo '🏗️ Building the application...'
-                sh 'npm run build'
+                echo '📦 Installing dependencies and building app in Docker...'
+                script {
+                    docker.image("${IMAGE_NAME}").inside {
+                        sh 'npm install'
+                        // Optional: if you add a build script later
+                        // sh 'npm run build'
+                    }
+                }
             }
         }
 
         stage('Prepare Artifact') {
             steps {
-                echo '📁 Zipping the build artifacts...'
+                echo '📁 Preparing build artifact...'
                 sh '''
                     mkdir -p build_artifacts
                     zip -r build_artifacts/app.zip *
@@ -65,11 +48,11 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build and Artifact preparation succeeded!'
+            echo '✅ Docker-based build succeeded!'
             archiveArtifacts artifacts: 'build_artifacts/*.zip', fingerprint: true
         }
         failure {
-            echo '❌ Build Failed!'
+            echo '❌ Docker-based build failed.'
         }
     }
 }

@@ -1,47 +1,60 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS'  // Name used in Global Tool Configuration
+    }
+
     environment {
-        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:$PATH"
         SONARQUBE_SERVER = 'SonarQubeServerName' // Optional
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
+                echo '✅ Checking out source code...'
                 checkout scm
+            }
+        }
+
+        stage('Debug Env') {
+            steps {
+                echo '🐛 Checking environment...'
+                sh 'echo $PATH'
+                sh 'which node'
+                sh 'which npm'
+                sh 'node -v'
+                sh 'npm -v'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                echo 'Running SonarQube Scan...'
-                // Uncomment below lines if SonarQube is integrated
+                echo '🔍 Running SonarQube Scan (Skipped)...'
+                // Uncomment below when Sonar is integrated
                 // withSonarQubeEnv('SonarQubeServerName') {
                 //     sh 'sonar-scanner'
                 // }
-                echo 'Skipping actual sonar scan for now...'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing npm dependencies...'
+                echo '📦 Installing npm dependencies...'
                 sh 'npm install'
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Building the application...'
+                echo '🏗️ Building the application...'
                 sh 'npm run build'
             }
         }
 
         stage('Prepare Artifact') {
             steps {
-                echo 'Zipping the build artifacts...'
+                echo '📁 Zipping the build artifacts...'
                 sh '''
                     mkdir -p build_artifacts
                     zip -r build_artifacts/app.zip *
@@ -52,11 +65,11 @@ pipeline {
 
     post {
         success {
-            echo 'Build and Artifact preparation succeeded!'
+            echo '✅ Build and Artifact preparation succeeded!'
             archiveArtifacts artifacts: 'build_artifacts/*.zip', fingerprint: true
         }
         failure {
-            echo 'Build Failed!'
+            echo '❌ Build Failed!'
         }
     }
 }

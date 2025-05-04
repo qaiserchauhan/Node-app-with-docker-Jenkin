@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:$PATH"
         SONARQUBE_SERVER = 'SonarQubeServerName' // Optional
     }
 
